@@ -1,11 +1,80 @@
 const express = require("express")
 const path = require("path")
 const uniqid = require("uniqid")
+const fs = require("fs")
+const  {writeFile,createReadStream} = require("fs-extra")
 const { readDB, writeDB } = require("../../lib/utilites")
 const { check, validationResult } = require("express-validator")
+const multer = require("multer")
 
 const router = express.Router()
 const productsFilePath = path.join(__dirname, "products.json")
+
+const {pipeline} = require("stream")
+
+const upload = multer({})
+
+
+
+const readFile = fileName =>{
+
+    const buffer = fs.readFileSync(path.join(__dirname,fileName))
+    const fileContent = buffer.toString()
+    return JSON.parse(fileContent)
+}
+productsFileImgPath= path.join(__dirname,"../../../public/img/products") // file i produktve i fshijna masi i krym komentet shqip
+const productsArray = readFile("products.json");
+
+const addImgpProperty = async (id,imgpath)=>{
+    let product = productsArray.find((product)=>product._id ===id)
+   
+        product.imageURL = imgpath;
+
+        fs.writeFileSync(path.join(__dirname,"products.json"),JSON.stringify(productsArray))
+   
+}
+router.post("/:id/upload",upload.single("product"), async (req,res,next)=>{
+
+    try {
+      addImgpProperty(req.params.id,`${productsFileImgPath}//`+`${req.params.id}.jpg`)
+        await writeFile(
+            path.join(productsFileImgPath,`${req.params.id}.jpg`),
+            req.file.buffer
+        )
+        res.status(201).send("uploaded")
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+router.post("/uploadMultiple",upload.array("multiple",8),async (req,res,next)=>{
+    try {
+        const arrayOfPromises = req.file.map(file=>
+            writeFile(path.join(productsFileImgPath,req.file.originalname),req.file.buffer)
+            )
+            await Promise.all(arrayOfPromises)
+            res.send("uploaded")
+        
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+router.get("/:name/download",async (req,res,next)=>{
+    const source = createReadStream(
+        path.join(productsFileImgPath,`${req.params.name}`)
+    )
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${req.params.name}.gz`
+    )
+    pipeline(source,zlib.createGzip(),res,error =>next(error))
+})
+
+//////////////////////////////////////////////////////
 
 router.get("/:id", async (req, res, next) => {
     try {
@@ -26,11 +95,11 @@ router.get("/:id", async (req, res, next) => {
   router.get("/", async (req, res, next) => {
     try {
       const productsDB = await readDB(productsFilePath)
-      if (req.query && req.query.name) {
+      if (req.query && req.query.category) {
         const filteredProducts = productsDB.filter(
           product =>
-            product.hasOwnProperty("name") &&
-            product.name.toLowerCase() === req.query.name.toLowerCase()
+            product.hasOwnProperty("category") &&
+            product.category.toLowerCase() === req.query.category.toLowerCase()
         )
         res.send(filteredProducts)
       } else {
