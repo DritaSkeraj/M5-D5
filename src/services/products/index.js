@@ -36,7 +36,7 @@ const addImgpProperty = async (id,imgpath)=>{
 router.post("/:id/upload",upload.single("product"), async (req,res,next)=>{
 
     try {
-      addImgpProperty(req.params.id,`${productsFileImgPath}//`+`${req.params.id}.jpg`)
+      addImgpProperty(req.params.id,`http://localhost:3001//img/products/`+`${req.params.id}.jpg`)
         await writeFile(
             path.join(productsFileImgPath,`${req.params.id}.jpg`),
             req.file.buffer
