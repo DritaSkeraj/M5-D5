@@ -3,6 +3,7 @@ const listEndpoints = require("express-list-endpoints")
 const { join } = require("path")
 const cors = require("cors")
 const productsRouter = require("./services/products")
+const reviewsRouter = require("./services/reviews")
 const {
   notFoundHandler,
   unauthorizedHandler,
@@ -26,7 +27,7 @@ server.use(loggerMiddleware)
 server.use(express.static(publicFolderPath))
 
 server.use("/products", productsRouter)
-//server.use("/movies", moviesRouter)
+server.use("/reviews", reviewsRouter)
 
 // ERROR HANDLERS
 
