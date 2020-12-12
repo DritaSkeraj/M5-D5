@@ -23,9 +23,10 @@ const readFile = fileName =>{
     return JSON.parse(fileContent)
 }
 productsFileImgPath= path.join(__dirname,"../../../public/img/products") // file i produktve i fshijna masi i krym komentet shqip
-const productsArray = readFile("products.json");
+
 
 const addImgpProperty = async (id,imgpath)=>{
+  const productsArray = readFile("products.json");
     let product = productsArray.find((product)=>product._id ===id)
    
         product.imageURL = imgpath;
@@ -36,7 +37,9 @@ const addImgpProperty = async (id,imgpath)=>{
 router.post("/:id/upload",upload.single("product"), async (req,res,next)=>{
 
     try {
+      console.log(req.params.id,"---deti---")
       addImgpProperty(req.params.id,`http://localhost:3001//img/products/`+`${req.params.id}.jpg`)
+    
         await writeFile(
             path.join(productsFileImgPath,`${req.params.id}.jpg`),
             req.file.buffer
